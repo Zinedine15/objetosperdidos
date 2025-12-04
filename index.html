@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Objetos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+    <h2 class="text-center mb-4">Listado de Objetos</h2>
+
+    <!-- FILTROS -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <label class="fw-bold">Filtrar por ID del objeto:</label>
+            <select id="filtroID" class="form-select">
+                <option value="">-- Mostrar todos --</option>
+            </select>
+
+            <button class="btn btn-primary mt-3" onclick="filtrar()">Aplicar Filtro</button>
+        </div>
+    </div>
+
+    <!-- TABLA -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID Objeto</th>
+                    <th>Tipo Objeto</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaObjetos"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Registro</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label>ID Objeto</label>
+                <input id="editID" class="form-control mb-2" disabled>
+
+                <label>Tipo de Objeto</label>
+                <input id="editTipo" class="form-control mb-2">
+
+                <label>Descripción</label>
+                <input id="editDesc" class="form-control mb-2">
+
+                <label>Fecha</label>
+                <input id="editFecha" type="datetime-local" class="form-control mb-2">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button class="btn btn-primary" onclick="guardarCambios()">Guardar Cambios</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ==========================
+   LISTA DE TIPOS DE OBJETO
+========================== */
+const tipos = {
+    "ELE-001": "Calculadora científica",
+    "ELE-002": "Laptop",
+    "ELE-003": "Bocinas",
+    "ELE-004": "Audífonos",
+    "ELE-005": "Cargador",
+    "ELE-006": "Celular",
+    "UTE-001": "Libreta",
+    "UTE-002": "Lápiz",
+    "UTE-003": "Pluma",
+    "UTE-004": "Marcadores",
+    "UTE-005": "Regla",
+    "UTE-006": "Juego de geometría",
+    "TUP-001": "Tupper",
+    "TUP-002": "Termo",
+    "TUP-003": "Lunchera",
+    "ROP-001": "Sudadera",
+    "ROP-002": "Gorra",
+    "ROP-003": "Bata de laboratorio",
+    "PAP-001": "Hojas blancas",
+    "PAP-002": "Carpetas",
+    "PAP-003": "Post-it",
+    "PAP-004": "Clips",
+    "PAP-005": "Engrapadora",
+    "OFI-001": "Teclado",
+    "OFI-002": "Mouse",
+    "DEP-001": "Balón de futbol",
+    "DEP-002": "Balón de basquetbol",
+    "SER-001": "Credencial escolar"
+};
+
+/* ==========================
+   JSON CON 30 REGISTROS
+========================== */
+let objetos = [
+    {"id":"ELE-001","tipo":tipos["ELE-001"],"descripcion":"Calculadora Casio","fecha":"2025-01-10T10:20"},
+    {"id":"ELE-002","tipo":tipos["ELE-002"],"descripcion":"Laptop Lenovo","fecha":"2025-01-11T14:30"},
+    {"id":"ELE-002","tipo":tipos["ELE-002"],"descripcion":"Laptop HP","fecha":"2025-01-12T16:10"},
+    {"id":"ELE-003","tipo":tipos["ELE-003"],"descripcion":"Bocinas Logitech","fecha":"2025-01-09T09:00"},
+    {"id":"ELE-004","tipo":tipos["ELE-004"],"descripcion":"Audífonos Sony","fecha":"2025-01-08T12:00"},
+
+    {"id":"ELE-005","tipo":tipos["ELE-005"],"descripcion":"Cargador Samsung","fecha":"2025-01-07T08:15"},
+    {"id":"ELE-006","tipo":tipos["ELE-006"],"descripcion":"Celular Motorola","fecha":"2025-01-06T07:10"},
+    {"id":"ELE-006","tipo":tipos["ELE-006"],"descripcion":"Celular Xiaomi","fecha":"2025-01-06T11:20"},
+    
+    {"id":"UTE-001","tipo":tipos["UTE-001"],"descripcion":"Libreta profesional","fecha":"2025-01-05T08:00"},
+    {"id":"UTE-003","tipo":tipos["UTE-003"],"descripcion":"Pluma azul","fecha":"2025-01-04T13:05"},
+    {"id":"UTE-003","tipo":tipos["UTE-003"],"descripcion":"Pluma negra","fecha":"2025-01-04T14:20"},
+
+    {"id":"UTE-006","tipo":tipos["UTE-006"],"descripcion":"Juego de geometría Maped","fecha":"2025-01-03T10:10"},
+    {"id":"TUP-001","tipo":tipos["TUP-001"],"descripcion":"Tupper chico","fecha":"2025-01-02T10:10"},
+    {"id":"TUP-002","tipo":tipos["TUP-002"],"descripcion":"Termo azul","fecha":"2025-01-01T09:10"},
+
+    {"id":"TUP-003","tipo":tipos["TUP-003"],"descripcion":"Lunchera roja","fecha":"2024-12-30T07:10"},
+    {"id":"ROP-001","tipo":tipos["ROP-001"],"descripcion":"Sudadera negra","fecha":"2024-12-29T06:20"},
+    {"id":"ROP-002","tipo":tipos["ROP-002"],"descripcion":"Gorra azul","fecha":"2024-12-28T17:20"},
+    
+    {"id":"ROP-003","tipo":tipos["ROP-003"],"descripcion":"Bata blanca","fecha":"2024-12-27T08:10"},
+    {"id":"PAP-001","tipo":tipos["PAP-001"],"descripcion":"Hojas blancas A4","fecha":"2024-12-26T11:11"},
+    {"id":"PAP-003","tipo":tipos["PAP-003"],"descripcion":"Post-it amarillo","fecha":"2024-12-25T10:00"},
+
+    {"id":"PAP-004","tipo":tipos["PAP-004"],"descripcion":"Caja de clips","fecha":"2024-12-24T14:40"},
+    {"id":"PAP-004","tipo":tipos["PAP-004"],"descripcion":"Clips de colores","fecha":"2024-12-24T15:00"},
+    
+    {"id":"OFI-001","tipo":tipos["OFI-001"],"descripcion":"Teclado inalámbrico","fecha":"2024-12-23T07:40"},
+    {"id":"OFI-002","tipo":tipos["OFI-002"],"descripcion":"Mouse óptico","fecha":"2024-12-22T09:30"},
+    
+    {"id":"DEP-001","tipo":tipos["DEP-001"],"descripcion":"Balón Adidas","fecha":"2024-12-21T10:40"},
+    {"id":"DEP-002","tipo":tipos["DEP-002"],"descripcion":"Balón Spalding","fecha":"2024-12-20T11:00"},
+    
+    {"id":"SER-001","tipo":tipos["SER-001"],"descripcion":"Credencial estudiante","fecha":"2024-12-19T08:50"},
+    {"id":"SER-001","tipo":tipos["SER-001"],"descripcion":"Credencial reposición","fecha":"2024-12-19T09:20"},
+    
+    {"id":"ELE-001","tipo":tipos["ELE-001"],"descripcion":"Calculadora científica gris","fecha":"2025-01-10T11:10"}
+];
+
+/* ==========================
+   MOSTRAR TABLA
+========================== */
+function cargarTabla(lista = objetos) {
+    const tabla = document.getElementById("tablaObjetos");
+    tabla.innerHTML = "";
+
+    lista.forEach((obj, index) => {
+        tabla.innerHTML += `
+            <tr>
+                <td>${obj.id}</td>
+                <td>${obj.tipo}</td>
+                <td>${obj.descripcion}</td>
+                <td>${obj.fecha}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" onclick="abrirModal(${index})">
+                        Editar
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+/* ==========================
+   RELLENAR SELECT CON IDS
+========================== */
+function cargarIDs() {
+    const filtro = document.getElementById("filtroID");
+    Object.keys(tipos).forEach(id => {
+        filtro.innerHTML += `<option value="${id}">${id} - ${tipos[id]}</option>`;
+    });
+}
+
+/* ==========================
+   FILTRAR (solo un filtro)
+========================== */
+function filtrar() {
+    const id = document.getElementById("filtroID").value;
+
+    if (id === "") {
+        cargarTabla(objetos);
+        return;
+    }
+
+    const filtrado = objetos.filter(o => o.id === id);
+    cargarTabla(filtrado);
+}
+
+/* ==========================
+   EDITAR REGISTRO
+========================== */
+let indexEdit = null;
+
+function abrirModal(index) {
+    indexEdit = index;
+
+    const obj = objetos[index];
+
+    document.getElementById("editID").value = obj.id;
+    document.getElementById("editTipo").value = obj.tipo;
+    document.getElementById("editDesc").value = obj.descripcion;
+    document.getElementById("editFecha").value = obj.fecha;
+
+    new bootstrap.Modal(document.getElementById("modalEditar")).show();
+}
+
+function guardarCambios() {
+    objetos[indexEdit].tipo = document.getElementById("editTipo").value;
+    objetos[indexEdit].descripcion = document.getElementById("editDesc").value;
+    objetos[indexEdit].fecha = document.getElementById("editFecha").value;
+
+    cargarTabla();
+    bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
+}
+
+/* INICIALIZACIÓN */
+cargarTabla();
+cargarIDs();
+</script>
+
+</body>
+</html>
